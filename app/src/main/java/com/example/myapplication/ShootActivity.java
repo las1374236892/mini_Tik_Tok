@@ -117,6 +117,8 @@ public class ShootActivity extends AppCompatActivity{
                         strings.add(videoFile.getAbsolutePath());
                         File mergeVideoFile = new File(Utils.getOutputMediaFile(2).getAbsolutePath());
                         Mp4ParserUtils.mergeVideo(strings, mergeVideoFile);
+                        videoFile.delete();
+                        videoFile2.delete();
                         videoFile2 = mergeVideoFile;
                         //System.out.println("合并\n"+v0+"\n"+v1+"成功"+"\n"+videoFile2.getAbsolutePath());
                     }
@@ -223,6 +225,8 @@ public class ShootActivity extends AppCompatActivity{
             strings.add(videoFile.getAbsolutePath());
             File mergeVideoFile = new File(Utils.getOutputMediaFile(2).getAbsolutePath());
             Mp4ParserUtils.mergeVideo(strings, mergeVideoFile);
+            videoFile.delete();
+            videoFile2.delete();
             videoFile2 = mergeVideoFile;
             //System.out.println("合并\n"+v0+"\n"+v1+"成功"+"\n"+videoFile2.getAbsolutePath());
             Looper.prepare();
