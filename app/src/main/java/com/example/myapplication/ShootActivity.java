@@ -10,6 +10,9 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,6 +32,7 @@ import com.example.myapplication.utils.Utils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,10 +54,9 @@ public class ShootActivity extends AppCompatActivity{
     int position;
     boolean isPreview;
     volatile boolean canceled = false;
-    Thread time;
-    long totalTime = 0;
+    volatile long totalTime = 0;
     int mDelayState = 0;
-    ProgressBar progressBar;
+    volatile ProgressBar progressBar;
     boolean flashOpen = false;
     volatile boolean End = false;
     @Override
@@ -109,15 +112,13 @@ public class ShootActivity extends AppCompatActivity{
                         videoFile2 = videoFile;
                     }
                     else{
-                        String v0 = videoFile2.getAbsolutePath();
-                        String v1 = videoFile.getAbsolutePath();
                         ArrayList<String> strings = new ArrayList<>();
-                        strings.add(v0);
-                        strings.add(v1);
+                        strings.add(videoFile2.getAbsolutePath());
+                        strings.add(videoFile.getAbsolutePath());
                         File mergeVideoFile = new File(Utils.getOutputMediaFile(2).getAbsolutePath());
                         Mp4ParserUtils.mergeVideo(strings, mergeVideoFile);
-                        videoFile2 = new File(mergeVideoFile.getAbsolutePath());
-                        System.out.println("合并\n"+v0+"\n"+v1+"成功"+"\n"+videoFile2.getAbsolutePath());
+                        videoFile2 = mergeVideoFile;
+                        //System.out.println("合并\n"+v0+"\n"+v1+"成功"+"\n"+videoFile2.getAbsolutePath());
                     }
                 }
                 else{
@@ -202,24 +203,33 @@ public class ShootActivity extends AppCompatActivity{
         //canceled = true;
 
         System.out.println(videoFile.getPath() + " "+progressBar.getProgress());
-
+        totalTime=0;
+        //System.out.println("EEEEEEEnd "+totalTime);
+        //progressBar.setProgress(1);
+        progressBar.setProgress(0);
+        //mHandler.handleMessage(new Message());
+        /*new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mHandler.handleMessage(new Message());
+            }
+        }).start();*/
         if(videoFile2 == null){
             videoFile2 = videoFile;
         }
         else{
-            String v0 = videoFile2.getAbsolutePath();
-            String v1 = videoFile.getAbsolutePath();
             ArrayList<String> strings = new ArrayList<>();
-            strings.add(v0);
-            strings.add(v1);
+            strings.add(videoFile2.getAbsolutePath());
+            strings.add(videoFile.getAbsolutePath());
             File mergeVideoFile = new File(Utils.getOutputMediaFile(2).getAbsolutePath());
             Mp4ParserUtils.mergeVideo(strings, mergeVideoFile);
-            videoFile2 = new File(mergeVideoFile.getAbsolutePath());
-            System.out.println("合并\n"+v0+"\n"+v1+"成功"+"\n"+videoFile2.getAbsolutePath());
+            videoFile2 = mergeVideoFile;
+            //System.out.println("合并\n"+v0+"\n"+v1+"成功"+"\n"+videoFile2.getAbsolutePath());
+            Looper.prepare();
+            Toast.makeText(ShootActivity.this, "文件保存在"+videoFile2.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+            Looper.loop();
         }
 
-        totalTime=0;
-        progressBar.setProgress(0);
 
     }
 
@@ -349,6 +359,14 @@ public class ShootActivity extends AppCompatActivity{
             mMediaRecorder.start();
             canceled = false;
             if(totalTime == 0){
+                //System.out.println("caonima  "+totalTime);
+                //progressBar.setProgress(0);
+                /*new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mHandler.handleMessage(new Message());
+                    }
+                }).start();*/
                 new Thread(() -> {
                     while(totalTime<15000 ) {
                         try {
@@ -358,7 +376,7 @@ public class ShootActivity extends AppCompatActivity{
                             else{
                                 totalTime += 50;
                                 progressBar.setProgress((int) totalTime / 150);
-                                System.out.println("?????!!!!");
+                                //System.out.println("?????!!!!");
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -489,4 +507,23 @@ public class ShootActivity extends AppCompatActivity{
         return true;
     }
 
+    private final MyHandler mHandler = new MyHandler(this);
+
+    private static class MyHandler extends Handler {
+        private final WeakReference<ShootActivity> mActivity;
+
+        public MyHandler(ShootActivity activity) {
+            mActivity = new WeakReference<ShootActivity>(activity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            ShootActivity activity = mActivity.get();
+            if (activity != null) {
+                //activity.mClockView.setShowAnalog(activity.mClockView.isShowAnalog());
+                activity.progressBar.setProgress(0);
+                super.handleMessage(msg);
+            }
+        }
+    }
 }

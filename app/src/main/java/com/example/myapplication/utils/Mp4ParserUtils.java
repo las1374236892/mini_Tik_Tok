@@ -33,7 +33,7 @@ public class Mp4ParserUtils {
         try {
             List<Movie> sourceMovies = new ArrayList<>();
             for (String video : videoList) {
-                System.out.println("adding "+video);
+              //  System.out.println("adding "+video);
                 sourceMovies.add(MovieCreator.build(video));
             }
 
