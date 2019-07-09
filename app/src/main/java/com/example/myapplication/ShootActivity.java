@@ -4,20 +4,14 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.hardware.Camera;
-import android.media.AudioManager;
 import android.media.CamcorderProfile;
-import android.media.Image;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.net.Uri;
+import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -35,14 +29,9 @@ import com.example.myapplication.utils.SeekBar.VerticalSeekBar;
 import com.example.myapplication.utils.Utils;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
-import static com.example.myapplication.utils.Utils.getOutputMediaFile;
 
 public class ShootActivity extends AppCompatActivity{
 

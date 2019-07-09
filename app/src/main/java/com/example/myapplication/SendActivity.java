@@ -45,7 +45,14 @@ import java.util.Timer;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
+import com.example.myapplication.bean.PostVideoResponse;
+import com.example.myapplication.network.IMiniDouyinService;
 import com.example.myapplication.utils.ResourceUtils;
 
 public class SendActivity extends AppCompatActivity {
@@ -121,12 +128,27 @@ public class SendActivity extends AppCompatActivity {
             chooseImage();
         });
 
+        post.setOnClickListener(v->{
+            if(isSelect){
+                postVideo();
+            }
+        });
 
-
-        mSelectedVideo = getMediaUriFromPath(this,videoFile.getAbsolutePath());
-        Log.d(TAG, "mSelectedVideo = " + mSelectedVideo);
+        //mSelectedVideo = getMediaUriFromPath(this,videoFile.getAbsolutePath());
+       // Log.d(TAG, "mSelectedVideo = " + mSelectedVideo);
         //mBtn.setText(R.string.post_it);
-        video = getMultipartFromUri("video", mSelectedVideo);
+        //video = getMultipartFromUri("video", mSelectedVideo);
+        //
+
+        System.out.println(videoFile.getAbsolutePath());
+        // File f = new File(ResourceUtils.getRealPath(SendActivity.this, uri));
+        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), videoFile);
+        try {
+            video = MultipartBody.Part.createFormData("video", URLEncoder.encode(videoFile.getName(),"UTF-8") , requestFile);
+        }catch (Exception e){
+            e.getStackTrace();
+            video = MultipartBody.Part.createFormData("video", videoFile.getName(), requestFile);
+        }
     }
 
     public void chooseImage() {
@@ -222,6 +244,36 @@ public class SendActivity extends AppCompatActivity {
             mediaPlayer.stop();
             mediaPlayer.release();
         }
+    }
+
+    private void postVideo() {
+       // mBtn.setText("POSTING...");
+        //mBtn.setEnabled(false);
+
+        // TODO-C2 (6) Send Request to post a video with its cover image
+        // if success, make a text Toast and show
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://test.androidcamp.bytedance.com/mini_douyin/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        IMiniDouyinService service = retrofit.create(IMiniDouyinService.class);
+
+        Call<PostVideoResponse> call  = service.postVideo("16061030","Aya",cover_image,video);
+        call.enqueue(new Callback<PostVideoResponse>() {
+            @Override
+            public void onResponse(Call<PostVideoResponse> call, Response<PostVideoResponse> response) {
+                System.out.println("success");
+                System.out.println(response.body());
+                Toast.makeText(SendActivity.this, "上传成功",Toast.LENGTH_LONG).show();
+                //mBtn.setText(R.string.success_try_refresh);
+                //mBtn.setEnabled(true);
+            }
+            @Override
+            public void onFailure(Call<PostVideoResponse> call, Throwable t) {
+                System.out.println("fail");
+                Toast.makeText(SendActivity.this, "上传失败",Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
 }
