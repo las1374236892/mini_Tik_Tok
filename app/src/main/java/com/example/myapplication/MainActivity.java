@@ -10,7 +10,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.v7.widget.OrientationHelper;
@@ -22,6 +25,16 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.example.myapplication.bean.Feed;
+import com.example.myapplication.bean.FeedResponse;
+import com.example.myapplication.network.IMiniDouyinService;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -35,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private MyAdapter myAdapter;
     private ViewPagerLayoutManager mLayoutManager;
+    private List<Feed> mFeeds = new ArrayList<>();
 
 
     @Override
@@ -172,9 +186,12 @@ public class MainActivity extends AppCompatActivity {
         imgPlay.animate().alpha(0f).start();
     }
 
+
+
     class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder>{
         //private int[] imgs = {R.drawable.img_video_1,R.drawable.img_video_2};
         private int[] videos = {R.raw.video_1,R.raw.video_2,R.raw.test};
+
         public MyAdapter(){
         }
 
@@ -187,14 +204,43 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
+            fetchFeed();
             holder.videoView.setVideoURI(Uri.parse("android.resource://"+getPackageName()+"/"+ videos[position % (videos.length)]));
-            //holder.videoView.setVideoPath("https://flv2.bn.netease.com/videolib1/1811/26/OqJAZ893T/HD/OqJAZ893T-mobile.mp4");
+            //System.out.println(mFeeds.size());
+            //holder.videoView.setVideoPath(mFeeds.get(position % (mFeeds.size())).getVideo_url());
         }
 
         @Override
         public int getItemCount() {
             return 20;
         }
+
+        public void fetchFeed(){
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl("http://test.androidcamp.bytedance.com/mini_douyin/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            IMiniDouyinService service = retrofit.create(IMiniDouyinService.class);
+
+            Call<FeedResponse> call = service.getVideo();
+            call.enqueue(new Callback<FeedResponse>() {
+                @Override
+                public void onResponse(Call<FeedResponse> call, Response<FeedResponse> response) {
+                    mFeeds = response.body().getFeeds();
+                    Log.e(TAG,"getGET!");
+
+                    //mRv.getAdapter().notifyDataSetChanged();
+
+                }
+
+                @Override
+                public void onFailure(Call<FeedResponse> call, Throwable t) {
+                    Log.e("***TEST***","Failure");
+                }
+            });
+        }
+
 
         public class ViewHolder extends RecyclerView.ViewHolder{
             ImageView img_thumb;

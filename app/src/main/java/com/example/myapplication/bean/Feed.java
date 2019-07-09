@@ -1,4 +1,4 @@
-package com.example.myapplication.Bean;
+package com.example.myapplication.bean;
 
 /**
  * @author Xavier.S
