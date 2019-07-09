@@ -6,6 +6,7 @@ import android.graphics.RectF;
 import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.CamcorderProfile;
+import android.media.Image;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -21,12 +22,16 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.example.myapplication.utils.Mp4ParserUtils;
+import com.example.myapplication.utils.SeekBar.VerticalSeekBar;
 import com.example.myapplication.utils.Utils;
 
 import java.io.File;
@@ -47,6 +52,8 @@ public class ShootActivity extends AppCompatActivity{
     private int CAMERA_TYPE = Camera.CameraInfo.CAMERA_FACING_BACK;
     //private int CAMERA_FRONT = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
+    ImageButton delayButton;
+    ImageButton flashButton;
     private boolean isRecording = false;
     private File videoFile;
     private File videoFile2;
@@ -68,6 +75,8 @@ public class ShootActivity extends AppCompatActivity{
         setContentView(R.layout.shoot);
         mSurfaceView = findViewById(R.id.img);
         progressBar = findViewById(R.id.progress);
+        delayButton = findViewById(R.id.btn_3S);
+        flashButton = findViewById(R.id.btn_flash);
         //todo 给SurfaceHolder添加Callback
         mSurfaceView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
@@ -131,9 +140,28 @@ public class ShootActivity extends AppCompatActivity{
                 //playVideo();
             } else {
                 //todo 录制
-                prepareVideoRecorder();
-                System.out.println("11111111");
-                isRecording=true;
+
+                if (mDelayState == 0) {
+                    prepareVideoRecorder();
+                    //System.out.println("11111111");
+                    isRecording=true;
+                } else {
+                    new CountDownTimer(mDelayState*1000, 1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                            Toast.makeText(ShootActivity.this, "倒计时"+millisUntilFinished/1000+"秒", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            prepareVideoRecorder();
+                            //System.out.println("11111111");
+                            isRecording=true;
+                        }
+                    }.start();
+                }
+
+
             }
         });
 
@@ -149,34 +177,19 @@ public class ShootActivity extends AppCompatActivity{
             startPreview(mSurfaceView.getHolder());
         });
 
-        findViewById(R.id.btn_zoom).setOnClickListener(v -> {
-            //todo 调焦，需要判断手机是否支持
-            Camera.Parameters parameters = mCamera.getParameters();
-            if(parameters.isZoomSupported()){
-                int zoom = parameters.getZoom();
-                int max_zoom = parameters.getMaxZoom();
-                if(zoom < max_zoom){
-                    zoom++;
-                }
-                parameters.setZoom(zoom);
-                mCamera.setParameters(parameters);
-            }
-            else{
-                Toast.makeText(this, "不支持放大", Toast.LENGTH_SHORT).show();
-            }
-        });
 
-
-        findViewById(R.id.btn_flash).setOnClickListener(view -> {
+        flashButton.setOnClickListener(view -> {
             //Toast.makeText(this, ""+mediaPlayer.isPlaying(), Toast.LENGTH_SHORT).show();
            //System.out.println(mediaPlayer.isPlaying());
             if( mCamera != null){
                 Camera.Parameters parameters = mCamera.getParameters();
                 if(flashOpen){
+                    flashButton.setImageResource(R.drawable.flash_off);
                     parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);//关闭
                     mCamera.setParameters(parameters);
                 }
                 else {
+                    flashButton.setImageResource(R.drawable.flash_on);
                     parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);//开启
                     mCamera.setParameters(parameters);
                 }
@@ -184,16 +197,65 @@ public class ShootActivity extends AppCompatActivity{
             }
         });
 
-        findViewById(R.id.btn_0S).setOnClickListener(v->{
-            mDelayState=0;
-            Toast.makeText(this, "设定为0S延迟", Toast.LENGTH_SHORT).show();
+
+        delayButton.setOnClickListener(v->{
+            if(mDelayState == 0){
+                mDelayState=3;
+                delayButton.setImageResource(R.drawable.delay_on);
+                Toast.makeText(this, "设定为3S延迟", Toast.LENGTH_SHORT).show();
+            }
+            else{
+                mDelayState=0;
+                delayButton.setImageResource(R.drawable.delay_off);
+                Toast.makeText(this, "关闭延迟", Toast.LENGTH_SHORT).show();
+            }
+
+    });
+
+        findViewById(R.id.cancel).setOnClickListener(v->{
+            videoFile2.delete();
+            findViewById(R.id.finished).setVisibility(View.INVISIBLE);
         });
 
-        findViewById(R.id.btn_3S).setOnClickListener(v->{
-            mDelayState=3;
-            Toast.makeText(this, "设定为3S延迟", Toast.LENGTH_SHORT).show();
+        findViewById(R.id.confirm).setOnClickListener(v->{
+            //前往预览界面
+            Intent intent = new Intent(ShootActivity.this,SendActivity.class);
+            intent.putExtra("VideoFile",videoFile2.getAbsolutePath());
+            startActivity(intent);
         });
 
+        VerticalSeekBar zoombar = findViewById(R.id.zoombar);
+        zoombar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                Camera.Parameters parameters = mCamera.getParameters();
+                if(parameters.isZoomSupported()){
+                    zoombar.setMax(parameters.getMaxZoom());
+                    int zoom = seekBar.getProgress();
+                    parameters.setZoom(zoom);
+                    mCamera.setParameters(parameters);
+                }
+                else{
+                    Toast.makeText(ShootActivity.this, "不支持放大", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        findViewById(R.id.back).setOnClickListener(v->{
+            Intent intent = new Intent(ShootActivity.this,MainActivity.class);
+            //intent.putExtra("VideoFile",videoFile2.getAbsolutePath());
+            startActivity(intent);
+        });
 
     }
 
@@ -216,6 +278,9 @@ public class ShootActivity extends AppCompatActivity{
                 mHandler.handleMessage(new Message());
             }
         }).start();*/
+        Message msg = new Message();
+        msg.what = 1;
+        mHandler.sendMessage(msg);
         if(videoFile2 == null){
             videoFile2 = videoFile;
         }
@@ -229,6 +294,7 @@ public class ShootActivity extends AppCompatActivity{
             videoFile2.delete();
             videoFile2 = mergeVideoFile;
             //System.out.println("合并\n"+v0+"\n"+v1+"成功"+"\n"+videoFile2.getAbsolutePath());
+
             Looper.prepare();
             Toast.makeText(ShootActivity.this, "文件保存在"+videoFile2.getAbsolutePath(), Toast.LENGTH_SHORT).show();
             Looper.loop();
@@ -372,14 +438,14 @@ public class ShootActivity extends AppCompatActivity{
                     }
                 }).start();*/
                 new Thread(() -> {
-                    while(totalTime<15000 ) {
+                    while(totalTime<5000 ) {
                         try {
                             Thread.sleep(50);
                             if(canceled){
                             }
                             else{
                                 totalTime += 50;
-                                progressBar.setProgress((int) totalTime / 150);
+                                progressBar.setProgress((int) totalTime / 50);
                                 //System.out.println("?????!!!!");
                             }
                         } catch (Exception e) {
@@ -524,9 +590,13 @@ public class ShootActivity extends AppCompatActivity{
         public void handleMessage(Message msg) {
             ShootActivity activity = mActivity.get();
             if (activity != null) {
-                //activity.mClockView.setShowAnalog(activity.mClockView.isShowAnalog());
-                activity.progressBar.setProgress(0);
                 super.handleMessage(msg);
+                if(msg.what ==1){
+                    activity.findViewById(R.id.finished).setVisibility(View.VISIBLE);
+                }
+                //activity.mClockView.setShowAnalog(activity.mClockView.isShowAnalog());
+                //activity.progressBar.setProgress(0);
+
             }
         }
     }
