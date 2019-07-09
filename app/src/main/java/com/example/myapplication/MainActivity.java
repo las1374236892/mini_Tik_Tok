@@ -1,9 +1,12 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -39,16 +42,16 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "ViewPagerActivity";
+    private static final String TAG = "MainActivity";
     private TextView textViewMe;
     private TextView textViewHomePage;
     private ImageView imageViewRecord;
     //button的背景太难看了，采用了TextView
 
     private RecyclerView mRecyclerView;
-    private MyAdapter myAdapter;
     private ViewPagerLayoutManager mLayoutManager;
     private List<Feed> mFeeds = new ArrayList<>();
+
 
 
     @Override
@@ -66,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         textViewMe = findViewById(R.id.Me);
         imageViewRecord = findViewById(R.id.Record);
         textViewHomePage = findViewById(R.id.homePage);
+
 
         initView();
         initListener();
@@ -93,14 +97,54 @@ public class MainActivity extends AppCompatActivity {
         });//加号绑定事件
     }
 
+    public void fetchFeed(){
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://test.androidcamp.bytedance.com/mini_douyin/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        IMiniDouyinService service = retrofit.create(IMiniDouyinService.class);
+
+        Call<FeedResponse> call = service.getVideo();
+        call.enqueue(new Callback<FeedResponse>() {
+            @Override
+            public void onResponse(Call<FeedResponse> call, Response<FeedResponse> response) {
+                mFeeds = response.body().getFeeds();
+                Log.e(TAG,"mFeeds size " + mFeeds.size());
+            }
+
+            @Override
+            public void onFailure(Call<FeedResponse> call, Throwable t) {
+                t.printStackTrace();
+                Log.e("***TEST***","Failure");
+            }
+        });
+    }
+
+
     private void initView() {
         mRecyclerView = findViewById(R.id.recycler);
-
-        mLayoutManager = new ViewPagerLayoutManager(this, OrientationHelper.VERTICAL);
-        myAdapter = new MyAdapter();
+        mLayoutManager = new ViewPagerLayoutManager(MainActivity.this, OrientationHelper.VERTICAL);
         mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.setAdapter(myAdapter);
+        new Thread(() -> {
+            fetchFeed();
+            Message msg = new Message();
+            handler.sendMessageDelayed(msg,2000);
+        }).start();
+
+
     }
+
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler()
+    {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            MyAdapter myAdapter = new MyAdapter(mFeeds);
+            mRecyclerView.setAdapter(myAdapter);
+        }
+    };
 
     private void initListener(){
         mLayoutManager.setOnViewPagerListener(new OnViewPagerListener() {
@@ -187,12 +231,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    protected static class handler extends Handler{
+
+    }
 
     class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder>{
         //private int[] imgs = {R.drawable.img_video_1,R.drawable.img_video_2};
         private int[] videos = {R.raw.video_1,R.raw.video_2,R.raw.test};
+        private List<Feed> list;
 
-        public MyAdapter(){
+
+        public MyAdapter(List<Feed> list){
+            this.list = list;
         }
 
 
@@ -204,10 +254,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            fetchFeed();
-            holder.videoView.setVideoURI(Uri.parse("android.resource://"+getPackageName()+"/"+ videos[position % (videos.length)]));
-            //System.out.println(mFeeds.size());
-            //holder.videoView.setVideoPath(mFeeds.get(position % (mFeeds.size())).getVideo_url());
+            //holder.videoView.setVideoURI(Uri.parse("android.resource://"+getPackageName()+"/"+ videos[position % (videos.length)]));
+            //fetchFeed();
+            Log.e(TAG, list.get(position % (list.size())).getVideo_url());
+            holder.videoView.setVideoPath(list.get(position % (list.size())).getVideo_url());
         }
 
         @Override
@@ -215,31 +265,9 @@ public class MainActivity extends AppCompatActivity {
             return 20;
         }
 
-        public void fetchFeed(){
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("http://test.androidcamp.bytedance.com/mini_douyin/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
 
-            IMiniDouyinService service = retrofit.create(IMiniDouyinService.class);
 
-            Call<FeedResponse> call = service.getVideo();
-            call.enqueue(new Callback<FeedResponse>() {
-                @Override
-                public void onResponse(Call<FeedResponse> call, Response<FeedResponse> response) {
-                    mFeeds = response.body().getFeeds();
-                    Log.e(TAG,"getGET!");
 
-                    //mRv.getAdapter().notifyDataSetChanged();
-
-                }
-
-                @Override
-                public void onFailure(Call<FeedResponse> call, Throwable t) {
-                    Log.e("***TEST***","Failure");
-                }
-            });
-        }
 
 
         public class ViewHolder extends RecyclerView.ViewHolder{
@@ -256,6 +284,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
         private String[] mPermissionsArrays = new String[]{Manifest.permission.CAMERA,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
