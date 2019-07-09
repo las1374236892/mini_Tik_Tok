@@ -9,7 +9,20 @@
         android:id="@+id/img"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-    
+
+
+    <ImageButton
+        android:id="@+id/go_back"
+        android:src="@drawable/back"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="50dp"
+        android:layout_marginLeft="25dp"
+        android:scaleType="fitCenter"
+        android:background="@android:color/transparent">
+    </ImageButton>
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="100dp"

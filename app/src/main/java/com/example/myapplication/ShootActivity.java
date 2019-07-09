@@ -403,7 +403,7 @@ public class ShootActivity extends AppCompatActivity{
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
-        mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
+        mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_480P));
         videoFile = new File(Utils.getOutputMediaFile(2).getAbsolutePath());
         //mMediaRecorder.setOutputFile(videoFile);
         mMediaRecorder.setOutputFile(videoFile.getAbsolutePath());
@@ -418,6 +418,7 @@ public class ShootActivity extends AppCompatActivity{
             mMediaRecorder.start();
             canceled = false;
             if(totalTime == 0){
+                videoFile2=null;
                 //System.out.println("caonima  "+totalTime);
                 //progressBar.setProgress(0);
                 /*new Thread(new Runnable() {
@@ -427,14 +428,15 @@ public class ShootActivity extends AppCompatActivity{
                     }
                 }).start();*/
                 new Thread(() -> {
-                    while(totalTime<5000 ) {
+
+                    while(totalTime<15000 ) {
                         try {
                             Thread.sleep(50);
                             if(canceled){
                             }
                             else{
                                 totalTime += 50;
-                                progressBar.setProgress((int) totalTime / 50);
+                                progressBar.setProgress((int) totalTime / 150);
                                 //System.out.println("?????!!!!");
                             }
                         } catch (Exception e) {

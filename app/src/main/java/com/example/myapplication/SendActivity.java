@@ -132,6 +132,16 @@ public class SendActivity extends AppCompatActivity {
             if(isSelect){
                 postVideo();
             }
+            else{
+                Toast.makeText(this, "没有选择封面！", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+        findViewById(R.id.go_back).setOnClickListener(v->{
+            Intent intent = new Intent(SendActivity.this,ShootActivity.class);
+            //intent.putExtra("VideoFile",videoFile2.getAbsolutePath());
+            startActivity(intent);
         });
 
         //mSelectedVideo = getMediaUriFromPath(this,videoFile.getAbsolutePath());
