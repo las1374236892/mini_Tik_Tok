@@ -4,44 +4,29 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.hardware.Camera;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraManager;
 import android.media.AudioManager;
-import android.media.CamcorderProfile;
 import android.media.MediaPlayer;
-import android.media.MediaRecorder;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
-import android.widget.VideoView;
 
-import com.example.myapplication.R;
+import com.example.myapplication.bean.PostVideoResponse;
+import com.example.myapplication.network.IMiniDouyinService;
+import com.example.myapplication.utils.ResourceUtils;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
+
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -50,10 +35,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-
-import com.example.myapplication.bean.PostVideoResponse;
-import com.example.myapplication.network.IMiniDouyinService;
-import com.example.myapplication.utils.ResourceUtils;
 
 public class SendActivity extends AppCompatActivity {
 
@@ -130,7 +111,9 @@ public class SendActivity extends AppCompatActivity {
 
         post.setOnClickListener(v->{
             if(isSelect){
+                post.setEnabled(false);
                 postVideo();
+
             }
             else{
                 Toast.makeText(this, "没有选择封面！", Toast.LENGTH_SHORT).show();
@@ -275,6 +258,7 @@ public class SendActivity extends AppCompatActivity {
                 System.out.println("success");
                 System.out.println(response.body());
                 Toast.makeText(SendActivity.this, "上传成功",Toast.LENGTH_LONG).show();
+                post.setEnabled(true);
                 //mBtn.setText(R.string.success_try_refresh);
                 //mBtn.setEnabled(true);
             }
@@ -282,6 +266,7 @@ public class SendActivity extends AppCompatActivity {
             public void onFailure(Call<PostVideoResponse> call, Throwable t) {
                 System.out.println("fail");
                 Toast.makeText(SendActivity.this, "上传失败",Toast.LENGTH_LONG).show();
+                post.setEnabled(true);
             }
         });
     }
