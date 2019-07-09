@@ -43,8 +43,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    private TextView textViewMe;
-    private TextView textViewHomePage;
     private ImageView imageViewRecord;
     //button的背景太难看了，采用了TextView
 
@@ -66,27 +64,12 @@ public class MainActivity extends AppCompatActivity {
                 requestPermissions(mPermissionsArrays,REQUEST_PERMISSION);
         }
 
-        textViewMe = findViewById(R.id.Me);
         imageViewRecord = findViewById(R.id.Record);
-        textViewHomePage = findViewById(R.id.homePage);
+
 
 
         initView();
         initListener();
-
-        textViewMe.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                System.out.println("Click OK!");
-            }
-        });//我的按钮绑定事件
-
-        textViewHomePage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                System.out.println("Click OK!");
-            }
-        });//首页按钮绑定事件
 
         imageViewRecord.setOnClickListener(new View.OnClickListener() {
             @Override
